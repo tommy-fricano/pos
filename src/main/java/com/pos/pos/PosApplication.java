@@ -8,6 +8,7 @@ import org.springframework.data.jpa.repository.config.EnableJpaRepositories;
 
 import javax.swing.*;
 
+// main app
 @SpringBootApplication()
 @EnableJpaRepositories
 public class PosApplication extends JFrame{
