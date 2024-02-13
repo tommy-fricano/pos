@@ -42,7 +42,6 @@ public class Register implements ScannedEventListener {
     }
     @Override
     public void onScanned(String scannedData) {
-        // Handle the scanned data in this method
         System.out.println("Scanned data received: " + scannedData);
         itemAdded(scannedItem(scannedData));
     }

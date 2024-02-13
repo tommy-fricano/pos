@@ -1,5 +1,6 @@
 package com.pos.pos;
 
+import com.pos.pos.server.Server;
 import com.pos.pos.view.frame.PosFrame;
 import org.springframework.boot.autoconfigure.SpringBootApplication;
 import org.springframework.boot.builder.SpringApplicationBuilder;
@@ -8,7 +9,6 @@ import org.springframework.data.jpa.repository.config.EnableJpaRepositories;
 
 import javax.swing.*;
 
-// main app
 @SpringBootApplication()
 @EnableJpaRepositories
 public class PosApplication extends JFrame{
@@ -16,6 +16,13 @@ public class PosApplication extends JFrame{
 	public static void main(String... args) {
 		ConfigurableApplicationContext context = createApplicationContext(args);
 		displayPosFrame(context);
+
+		try{
+			Server server = new Server();
+			server.start(4040);
+		}catch (Exception e){
+			System.out.println(e.getStackTrace());
+		}
 	}
 
 	private static ConfigurableApplicationContext createApplicationContext(String... args) {

@@ -2,10 +2,15 @@ package com.pos.pos.service;
 
 import com.pos.pos.models.Basket;
 import com.pos.pos.models.LineItem;
+import com.pos.pos.server.Server;
+import lombok.RequiredArgsConstructor;
 import org.springframework.stereotype.Component;
 
 @Component
+@RequiredArgsConstructor
 public class VirtualJournal {
+
+    private final Server server;
 
     // todo move to virtual journal
 
@@ -13,14 +18,17 @@ public class VirtualJournal {
 //    private int cashierId;
 //    private int registerId;
 //    private String location;
+    //todo look up how to get lat and long
     public void basketInitialized(){
         System.out.println("Virtual Journal: Basket Started.");
     }
     public void itemAddedLog(LineItem item){
+        server.broadcast("Virtual Journal: Added Item:  "+ item.getName() + " "+ item.getQuantity() +" "+item.getValue());
         System.out.println("Virtual Journal: Added Item:  "+ item.getName() + " "+ item.getQuantity() +" "+item.getValue());
     }
 
     public void itemVoidedLog(LineItem item){
+        server.broadcast("Virtual Journal: Voided Item:  "+ item.getName() + " "+ item.getQuantity() +" "+item.getValue());
         System.out.println("Virtual Journal: Voided Item:  "+ item.getName() + " "+ item.getQuantity() +" "+item.getValue());
     }
 
@@ -31,7 +39,7 @@ public class VirtualJournal {
             log.append(item.getName()).append(" ").append(item.getQuantity()).append(" ").append(item.getValue()).append(", ");
         }
         log.append(" Total: ").append(basket.getVoidTotal()).append(".");
-
+        server.broadcast(String.valueOf(log));
         System.out.println(log);
     }
 
@@ -42,7 +50,7 @@ public class VirtualJournal {
             log.append(item.getName()).append(" ").append(item.getQuantity()).append(" ").append(item.getValue()).append(" voided: ").append(item.isVoided()).append(", ");
         }
         log.append(" Subtotal: ").append(basket.getSubtotal()).append(" Total: ").append(basket.getTotal()).append(".");
-
+        server.broadcast(String.valueOf(log));
         System.out.println(log);
     }
 }
