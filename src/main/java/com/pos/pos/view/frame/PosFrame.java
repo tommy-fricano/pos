@@ -28,7 +28,7 @@ public class PosFrame extends JFrame implements RegisterEventListener {
 
     DecimalFormat decimalFormat = new DecimalFormat("#,##0.00");
 
-    private final transient Register register;
+    private final Register register;
 
     @Getter
     private transient List<LineItem> lineItemList = new ArrayList<>();

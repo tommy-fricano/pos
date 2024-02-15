@@ -1,9 +1,11 @@
 package com.pos.pos.models;
 
+import com.google.gson.annotations.SerializedName;
 import lombok.Getter;
 import lombok.Setter;
 
 import java.math.BigDecimal;
+import java.time.ZonedDateTime;
 import java.util.ArrayList;
 import java.util.List;
 
@@ -20,6 +22,12 @@ public class Basket {
     private BigDecimal subtotal = BigDecimal.valueOf(0);
 
     private BigDecimal total= BigDecimal.valueOf(0);
+
+    private String registerId;
+
+    private String cashierId;
+
+    private String createdTimestamp;
 
 
     public void appendLineItem(LineItem lineItem){

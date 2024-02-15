@@ -8,29 +8,17 @@ import jakarta.annotation.PostConstruct;
 import lombok.RequiredArgsConstructor;
 import org.springframework.stereotype.Component;
 
-import java.time.ZoneId;
-import java.time.ZonedDateTime;
-import java.util.Random;
-
 @Component
 @RequiredArgsConstructor
 public class VirtualJournalService implements RegisterEventListener {
 
-    public static final String VIRTUAL_JOURNAL = "Virtual Journal: ";
-    public static final String REGISTER_ID = ": Register Id: ";
+    public static final String VIRTUAL_JOURNAL_LOG = "Virtual Journal: ";
     private final Server server;
     private final Register register;
 
-    private ZonedDateTime currentZonedDateTime;
-
-//    private int cashierId;
-    private int registerId;
-    private final Random r = new Random();
     @PostConstruct
     private void begin(){
         register.addRegisterEventListener(this);
-        currentZonedDateTime = ZonedDateTime.now(ZoneId.systemDefault());
-        registerId = r.nextInt(50);
     }
 
 
@@ -45,18 +33,18 @@ public class VirtualJournalService implements RegisterEventListener {
     }
 
     public void itemLog(RegisterEvent registerEvent) {
-        server.broadcast(VIRTUAL_JOURNAL + currentZonedDateTime + REGISTER_ID + registerId + ": " + registerEvent.buildLineItemString(registerEvent.getLastItem()));
-        System.out.println(VIRTUAL_JOURNAL+ currentZonedDateTime + REGISTER_ID + registerId + ": "  + registerEvent.buildLineItemString(registerEvent.getLastItem()));
+        server.broadcast(VIRTUAL_JOURNAL_LOG + registerEvent.buildLineItemString(registerEvent.getLastItem()));
+        System.out.println(VIRTUAL_JOURNAL_LOG  + registerEvent.buildLineItemString(registerEvent.getLastItem()));
     }
 
     public void basketInitializedLog(RegisterEvent event){
-        server.broadcast(VIRTUAL_JOURNAL + currentZonedDateTime + REGISTER_ID + registerId + ": "  + event.getAction() );
-        System.out.println(VIRTUAL_JOURNAL + currentZonedDateTime + REGISTER_ID + registerId + ": "  + event.getAction());
+        server.broadcast(VIRTUAL_JOURNAL_LOG + event.getAction() );
+        System.out.println(VIRTUAL_JOURNAL_LOG + event.getAction());
     }
 
     public void basketCompleteLog(RegisterEvent event){
         StringBuilder log = new StringBuilder();
-        log.append(VIRTUAL_JOURNAL).append(currentZonedDateTime).append(REGISTER_ID).append(registerId).append(": ").append(event.buildEventString());
+        log.append(VIRTUAL_JOURNAL_LOG).append(": ").append(event.buildEventString());
         server.broadcast(String.valueOf(log));
         System.out.println(log);
     }

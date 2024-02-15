@@ -6,7 +6,7 @@ public enum RegisterEventEnums {
     ADDITEM,
     VOIDITEM,
     VOIDBASKET,
-
     CASHCHECKOUT,
-    CREDITCHECKOUT
+    CREDITCHECKOUT,
+    ENDBASKET
 }

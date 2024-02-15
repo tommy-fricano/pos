@@ -27,8 +27,6 @@ public class BarcodeScanner implements KeyEventDispatcher {
     public boolean dispatchKeyEvent(KeyEvent e) {
         if (e.getID() == KeyEvent.KEY_TYPED) {
             char typedChar = e.getKeyChar();
-
-            // Check for the Enter key to indicate the end of a scan
             if (typedChar == '\n') {
                 handleScannedData(scannedData.toString());
                 scannedData.setLength(0);
@@ -37,12 +35,10 @@ public class BarcodeScanner implements KeyEventDispatcher {
             }
         }
 
-        // Continue to dispatch the event to other listeners
         return false;
     }
 
     private void handleScannedData(String scannedData) {
-        // Notify all registered listeners with the scanned data
         for (ScannedEventListener listener : listeners) {
             listener.onScanned(scannedData);
         }

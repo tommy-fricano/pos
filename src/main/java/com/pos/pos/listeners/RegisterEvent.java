@@ -1,6 +1,7 @@
 package com.pos.pos.listeners;
 
 import com.google.gson.Gson;
+import com.google.gson.GsonBuilder;
 import com.pos.pos.models.Basket;
 import com.pos.pos.models.LineItem;
 import lombok.*;
@@ -31,7 +32,8 @@ public class RegisterEvent {
     }
 
     public String toJson(){
-        Gson gson = new Gson();
+        Gson gson = new GsonBuilder().setPrettyPrinting()
+                .create();
         return gson.toJson(basket);
     }
 }

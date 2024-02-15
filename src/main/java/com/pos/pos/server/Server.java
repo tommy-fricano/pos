@@ -28,7 +28,6 @@ public class Server {
                 s = serverSocket.accept();
                 System.out.println("new client connected "+ s);
                 connect(s);
-
             }
             catch (Exception e){
                 s.close();

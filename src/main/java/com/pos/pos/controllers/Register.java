@@ -10,6 +10,8 @@ import lombok.Getter;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.stereotype.Component;
 
+import java.time.ZoneId;
+import java.time.ZonedDateTime;
 import java.util.ArrayList;
 import java.util.List;
 
@@ -63,40 +65,55 @@ public class Register implements ScannedEventListener, RegisterEventListener{
         isBasket = true;
         this.basket = new Basket();
         this.basket.setLineItems(new ArrayList<>());
+        this.basket.setRegisterId("404404");
+        this.basket.setCashierId("201201");
+        this.basket.setCreatedTimestamp(String.valueOf(ZonedDateTime.now(ZoneId.systemDefault())));
+        this.updateListeners(
+                RegisterEvent.builder()
+                .action(RegisterEventEnums.STARTBASKET)
+                .basket(this.basket)
+                .build()
+        );
     }
 
     public void itemAdded(LineItem lineItem){
-        RegisterEvent event = new RegisterEvent();
         if(this.basket == null){
-            // start basket and send event to Virtual Journal
             this.startBasket();
-            event.setAction(RegisterEventEnums.STARTBASKET);
-            this.listeners.get(0).updateListeners(event);
         }
         this.basket.appendLineItem(lineItem);
-        event = RegisterEvent.builder()
-                .action(RegisterEventEnums.ADDITEM)
-                .basket(this.basket)
-                .build();
-        this.updateListeners(event);
+
+        this.updateListeners(
+                RegisterEvent.builder()
+                        .action(RegisterEventEnums.ADDITEM)
+                        .basket(this.basket)
+                        .build()
+        );
     }
+
     public void itemVoided(){
         this.basket.voidLineItem();
-        RegisterEvent event = RegisterEvent.builder()
+
+        this.updateListeners(
+                RegisterEvent.builder()
                 .action(RegisterEventEnums.VOIDITEM)
                 .basket(this.basket)
-                .build();
-        this.updateListeners(event);
+                .build());
     }
 
 
     public void endBasket(RegisterEventEnums eventEnums){
-        RegisterEvent event = RegisterEvent.builder()
+        this.updateListeners(
+                RegisterEvent.builder()
                 .action(eventEnums)
                 .basket(this.basket)
-                .build();
-        // only send info to Virtual Journal
-        this.listeners.get(0).updateListeners(event);
+                .build()
+        );
+//        this.updateListeners(
+//                RegisterEvent.builder()
+//                .action(RegisterEventEnums.ENDBASKET)
+//                        .basket(this.basket)
+//                        .build()
+//        );
         this.basket = null;
     }
 

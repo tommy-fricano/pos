@@ -1,5 +1,7 @@
 package com.pos.pos.server;
 
+import lombok.Getter;
+
 import java.io.BufferedReader;
 import java.io.InputStreamReader;
 import java.io.PrintWriter;
@@ -7,12 +9,12 @@ import java.net.Socket;
 
 public class ClientHandler implements Runnable{
 
-    BufferedReader reader;
-    PrintWriter writer;
-    Socket s;
-    Server server;
+    private BufferedReader reader;
+    private PrintWriter writer;
+    private Socket s;
+    private Server server;
 
-    boolean stopped = false;
+    private boolean stopped = false;
 
     public ClientHandler(Server server, Socket socket){
         try{
@@ -30,10 +32,11 @@ public class ClientHandler implements Runnable{
     public void run() {
         while(!stopped){
             try{
+
                 char c = (char)reader.read();
-//                if(c == '\uFFFF'){
-//                    break;
-//                }
+                if(c == '\uFFFF'){
+                    break;
+                }
                 System.out.print(c);
             }
             catch(Exception e){
@@ -49,6 +52,7 @@ public class ClientHandler implements Runnable{
     }
 
     public void stop(){
+        this.write("Client Disconnected");
         this.stopped = true;
     }
 }
