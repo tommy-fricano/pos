@@ -4,13 +4,14 @@ import lombok.Getter;
 import lombok.Setter;
 
 import java.math.BigDecimal;
+import java.util.ArrayList;
 import java.util.List;
 
 @Setter
 @Getter
 public class Basket {
 
-    private final BigDecimal TAX = BigDecimal.valueOf(.07);
+    private static final BigDecimal TAX = BigDecimal.valueOf(.07);
 
     private List<LineItem> lineItems;
 
@@ -20,52 +21,33 @@ public class Basket {
 
     private BigDecimal total= BigDecimal.valueOf(0);
 
-    private BigDecimal voidTotal = BigDecimal.valueOf(0);
 
-    public boolean appendLineItem(LineItem lineItem){
-        boolean newItem = true;
-        for(LineItem itemInBasket : lineItems){
-            if(itemInBasket.getName().equals(lineItem.getName())){
-                itemInBasket.setQuantity(itemInBasket.getQuantity() +1);
-                itemInBasket.setValue(itemInBasket.getValue().add(lineItem.getValue()));
-                newItem = false;
-            }
-        }
-        if(newItem){ lineItems.add(lineItem);}
+    public void appendLineItem(LineItem lineItem){
+        lineItems.add(lineItem);
 
-        updateTotals(lineItem, true);
+        subtotal = subtotal.add(lineItem.getPrice());
         total = subtotal.add(subtotal.multiply(TAX));
-        voidTotal = subtotal;
-        return newItem;
     }
 
     public void voidLineItem(){
         if(lineItems.isEmpty()){
             return;
         }
-        LineItem last = lineItems.get(lineItems.size()-1);
+        List<LineItem> nonVoidedLineItems = this.getNonVoidedLineItems();
+        LineItem last = nonVoidedLineItems.get(nonVoidedLineItems.size()-1);
         last.setVoided(true);
-        if(last.getQuantity() >= 3){
-            last.setQuantity(last.getQuantity()-1);
-            last.setValue(last.getValue().subtract(last.getValue().divide(BigDecimal.valueOf(last.getQuantity()))));
-        } else if(last.getQuantity() == 2){
-            last.setQuantity(last.getQuantity()-1);
-            last.setValue(last.getValue().subtract(last.getValue()));
-        } else{
-            lineItems.get(lineItems.size()-1).setVoided(true);
-        }
 
-        updateTotals(last, false);
+        subtotal = subtotal.subtract(last.getPrice());
+        total = subtotal.add(subtotal.multiply(TAX));
     }
 
-    private void updateTotals(LineItem item, boolean add){
-        if(add){
-            subtotal = subtotal.add(item.getValue());
-            total = subtotal.add(subtotal.multiply(TAX));
-            voidTotal = subtotal;
-        }else{
-            subtotal = subtotal.subtract(item.getValue());
-            total = subtotal.add(subtotal.multiply(TAX));
+    public List<LineItem> getNonVoidedLineItems(){
+        List<LineItem> result = new ArrayList<>();
+        for(LineItem lineItem: lineItems){
+            if(!lineItem.isVoided()){
+                result.add(lineItem);
+            }
         }
+        return result;
     }
 }

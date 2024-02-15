@@ -2,7 +2,6 @@ package com.pos.pos.models;
 
 import jakarta.persistence.*;
 import lombok.*;
-import org.springframework.beans.factory.annotation.Value;
 
 import java.math.BigDecimal;
 
@@ -11,8 +10,8 @@ import java.math.BigDecimal;
 @Setter
 @NoArgsConstructor
 @Data
-@Table
-public class PriceBook {
+@Table(name = "PRICE_BOOK")
+public class Item {
 
     @Id
     @GeneratedValue(strategy =  GenerationType.IDENTITY)
@@ -21,13 +20,13 @@ public class PriceBook {
     @Column
     private long code;
     @Column
-    private String itemName;
+    private String name;
     @Column
     private BigDecimal price;
 
-    public PriceBook(long code, String itemName, BigDecimal price) {
+    public Item(long code, String name, BigDecimal price) {
         this.code = code;
-        this.itemName = itemName;
+        this.name = name;
         this.price = price;
     }
 }

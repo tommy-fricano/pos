@@ -1,11 +1,10 @@
 package com.pos.pos.controllers;
 
-import com.pos.pos.listener.ScannedEventListener;
+import com.pos.pos.listeners.*;
 import com.pos.pos.models.Basket;
+import com.pos.pos.models.Item;
 import com.pos.pos.models.LineItem;
-import com.pos.pos.models.PriceBook;
 import com.pos.pos.service.PriceBookService;
-import com.pos.pos.service.VirtualJournal;
 import jakarta.annotation.PostConstruct;
 import lombok.Getter;
 import org.springframework.beans.factory.annotation.Autowired;
@@ -15,13 +14,16 @@ import java.util.ArrayList;
 import java.util.List;
 
 @Component
-public class Register implements ScannedEventListener {
+public class Register implements ScannedEventListener, RegisterEventListener{
+
+    private final List<RegisterEventListener> listeners;
 
     private final PriceBookService priceBookService;
-    private final VirtualJournal virtualJournal;
 
     @Getter
     private final BarcodeScanner barcodeScanner;
+
+
 
     @Getter
     private Basket basket;
@@ -29,63 +31,85 @@ public class Register implements ScannedEventListener {
     boolean isBasket;
 
     @Autowired
-    public Register(PriceBookService priceBookService, VirtualJournal virtualJournal, BarcodeScanner barcodeScanner) {
+    public Register(PriceBookService priceBookService, BarcodeScanner barcodeScanner) {
         this.priceBookService = priceBookService;
-        this.virtualJournal = virtualJournal;
         this.barcodeScanner = barcodeScanner;
-        startBasket();
+        this.listeners = new ArrayList<>();
     }
 
     @PostConstruct
     private void begin(){
         barcodeScanner.addScannedEventListener(this);
     }
+
     @Override
     public void onScanned(String scannedData) {
-        System.out.println("Scanned data received: " + scannedData);
-        itemAdded(scannedItem(scannedData));
+        this.itemAdded(getItemFromScan(scannedData));
+    }
+
+    public void addRegisterEventListener(RegisterEventListener listener) {
+        listeners.add(listener);
+    }
+
+
+    @Override
+    public void updateListeners(RegisterEvent event) {
+        for (RegisterEventListener registerEventListener : listeners) {
+            registerEventListener.updateListeners(event);
+        }
     }
 
     public void startBasket(){
         isBasket = true;
-        basket = new Basket();
-        basket.setLineItems(new ArrayList<>());
-        virtualJournal.basketInitialized();
+        this.basket = new Basket();
+        this.basket.setLineItems(new ArrayList<>());
     }
 
-    public boolean itemAdded(LineItem lineItem){
-        if(basket == null){
-            startBasket();
+    public void itemAdded(LineItem lineItem){
+        RegisterEvent event = new RegisterEvent();
+        if(this.basket == null){
+            // start basket and send event to Virtual Journal
+            this.startBasket();
+            event.setAction(RegisterEventEnums.STARTBASKET);
+            this.listeners.get(0).updateListeners(event);
         }
-        virtualJournal.itemAddedLog(lineItem);
-        return basket.appendLineItem(lineItem);
+        this.basket.appendLineItem(lineItem);
+        event = RegisterEvent.builder()
+                .action(RegisterEventEnums.ADDITEM)
+                .basket(this.basket)
+                .build();
+        this.updateListeners(event);
+    }
+    public void itemVoided(){
+        this.basket.voidLineItem();
+        RegisterEvent event = RegisterEvent.builder()
+                .action(RegisterEventEnums.VOIDITEM)
+                .basket(this.basket)
+                .build();
+        this.updateListeners(event);
     }
 
-    public void itemVoided(LineItem lineItem){
-        virtualJournal.itemVoidedLog(lineItem);
-        basket.voidLineItem();
+
+    public void endBasket(RegisterEventEnums eventEnums){
+        RegisterEvent event = RegisterEvent.builder()
+                .action(eventEnums)
+                .basket(this.basket)
+                .build();
+        // only send info to Virtual Journal
+        this.listeners.get(0).updateListeners(event);
+        this.basket = null;
     }
 
-    public void basketVoided(){
-        virtualJournal.basketVoidedLog(basket);
-        basket = null;
-    }
-
-    public void endBasket(){
-        virtualJournal.basketComplete(basket);
-        basket = null;
-    }
-
-    public List<PriceBook> sendPriceBook(){
+    public List<Item> sendPriceBook(){
         return priceBookService.getPriceBook();
     }
 
-    public LineItem scannedItem(String scannedData){
-        PriceBook item = priceBookService.getPriceBookItem(Long.parseLong(scannedData));
+    public LineItem getItemFromScan(String scannedData){
+        Item item = priceBookService.getItem(Long.parseLong(scannedData));
         return LineItem.builder()
-                .name(item.getItemName())
+                .item(item)
                 .quantity(1)
-                .value(item.getPrice())
+                .price(item.getPrice())
                 .voided(false)
                 .build();
     }

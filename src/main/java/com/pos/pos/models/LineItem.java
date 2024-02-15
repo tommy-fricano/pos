@@ -10,10 +10,11 @@ import java.math.BigDecimal;
 @AllArgsConstructor
 public class LineItem {
 
-    private String name;
-    private BigDecimal value;
+    private Item item;
+    private BigDecimal price;
     private int quantity;
     private boolean voided;
+
 
 
 }

@@ -1,13 +1,15 @@
 package com.pos.pos.view.frame;
 
 
-import com.pos.pos.controllers.BarcodeScanner;
 import com.pos.pos.controllers.Register;
-import com.pos.pos.listener.ScannedEventListener;
+import com.pos.pos.listeners.RegisterEvent;
+import com.pos.pos.listeners.RegisterEventEnums;
+import com.pos.pos.listeners.RegisterEventListener;
+import com.pos.pos.models.Item;
 import com.pos.pos.models.LineItem;
-import com.pos.pos.models.PriceBook;
+import jakarta.annotation.PostConstruct;
 import lombok.Getter;
-import org.springframework.beans.factory.annotation.Autowired;
+import lombok.RequiredArgsConstructor;
 import org.springframework.stereotype.Component;
 
 import javax.swing.*;
@@ -21,49 +23,40 @@ import java.util.ArrayList;
 import java.util.List;
 
 @Component
-public class PosFrame extends JFrame implements ScannedEventListener {
-
-    private static final String COMPLETE = "complete";
-    private static final String ADD = "add";
-    private static final String VOID = "void";
+@RequiredArgsConstructor
+public class PosFrame extends JFrame implements RegisterEventListener {
 
     DecimalFormat decimalFormat = new DecimalFormat("#,##0.00");
 
-    @Autowired
-    private final Register register;
-
-    @Autowired
-    private final BarcodeScanner barcodeScanner;
-
-    public PosFrame(final Register register, BarcodeScanner barcodeScanner){
-        this.register = register;
-        this.barcodeScanner = barcodeScanner;
-    }
+    private final transient Register register;
 
     @Getter
-    private List<LineItem> lineItemList = new ArrayList<>();
+    private transient List<LineItem> lineItemList = new ArrayList<>();
     private DefaultListModel<String> listModel;
+    private final JButton  voidItemBtn = new JButton("Void Item");
+    private final JButton voidBasketBtn = new JButton("Void Basket");
+    private final JButton cashBtn = new JButton("Cash");
+    private final JButton creditBtn = new JButton("Credit");
+    private final JLabel basketHeader = new JLabel("<html><span style='font-size:22px'>Basket: </span></html>");
+    private final JLabel basketChart = new JLabel("<html><span style='font-size:11px'>Item &emsp;&emsp;&emsp;&emsp;Quantity&emsp;Price </span></html>");
+    private final JLabel subTotal = new JLabel("<html><span style='font-size:16px'>Subtotal: </span></html>");
+    private final JLabel total = new JLabel("<html><span style='font-size:20px'>Total: </span></html>");
+    private final JLabel subTotalValue = new JLabel();
+    private final JLabel totalValue = new JLabel();
 
-    private BigDecimal totalVal = BigDecimal.valueOf(0);
-    private BigDecimal subtotalVal = BigDecimal.valueOf(0);
-    private JButton  voidItemBtn = new JButton("Void Item");
-    private JButton voidBasketBtn = new JButton("Void Basket");
-    private JButton cashBtn = new JButton("Cash");
-    private JButton creditBtn = new JButton("Credit");
-    private JLabel basketHeader = new JLabel("<html><span style='font-size:22px'>Basket: </span></html>");
-    private JLabel basketChart = new JLabel("<html><span style='font-size:11px'>Item &emsp;&emsp;&emsp;&emsp;Quantity&emsp;Price </span></html>");
-    private JLabel subTotal = new JLabel("<html><span style='font-size:16px'>Subtotal: </span></html>");
-    private JLabel total = new JLabel("<html><span style='font-size:20px'>Total: </span></html>");
-    private JLabel subTotalValue = new JLabel();
-    private JLabel totalValue = new JLabel();
+    @PostConstruct
+    private void begin(){
+        register.addRegisterEventListener(this);
+    }
+
 
     @Override
-    public void onScanned(String scannedData) {
-        LineItem scannedItem = register.scannedItem(scannedData);
-        lineItemList.add(scannedItem);
+    public void updateListeners(RegisterEvent event) {
+        lineItemList = event.getBasket().getNonVoidedLineItems() == null ? new ArrayList<>() : new ArrayList<>(event.getBasket().getNonVoidedLineItems());
         updateLineItemList();
-        updateTotals(scannedItem, ADD);
+        newUpdateTotals(event.getBasket().getTotal(), event.getBasket().getSubtotal());
     }
+
 
     public void setupFrame(){
         setTitle("REGISTER");
@@ -74,7 +67,6 @@ public class PosFrame extends JFrame implements ScannedEventListener {
         initEvent();
         KeyboardFocusManager keyboardFocusManager = KeyboardFocusManager.getCurrentKeyboardFocusManager();
         keyboardFocusManager.addKeyEventDispatcher(register.getBarcodeScanner());
-        barcodeScanner.addScannedEventListener(this);
     }
 
     private void initComponent(){
@@ -135,68 +127,49 @@ public class PosFrame extends JFrame implements ScannedEventListener {
 
     public void clickCreditBtn(ActionEvent e){
         if(basketEmptyCheck()){return;}
-        listModel.removeAllElements();
-        lineItemList = null;
-        register.endBasket();
+        register.endBasket(RegisterEventEnums.CREDITCHECKOUT);
         lineItemList = new ArrayList<>();
-        updateTotals(null, COMPLETE);
+        this.updateLineItemList();
+        newUpdateTotals(BigDecimal.ZERO, BigDecimal.ZERO);
         JOptionPane.showMessageDialog(null, "Order Tendered with credit. Starting new basket.");
-
     }
     private void clickCashBtn(ActionEvent e){
         if(basketEmptyCheck()){return;}
-        listModel.removeAllElements();
-        lineItemList = null;
-        register.endBasket();
+        register.endBasket(RegisterEventEnums.CASHCHECKOUT);
         lineItemList = new ArrayList<>();
-        updateTotals(null, COMPLETE);
+        this.updateLineItemList();
+        newUpdateTotals(BigDecimal.ZERO, BigDecimal.ZERO);
         JOptionPane.showMessageDialog(null, "Order Tendered with cash. Starting new basket.");
     }
     private void clickVoidItemBtn(ActionEvent e){
         if(basketEmptyCheck()){return;}
-        LineItem last = lineItemList.get(lineItemList.size()-1);
-        if(last.getQuantity() == 1){
-            lineItemList.remove(last);
-        }
-        register.itemVoided(last);
-        updateTotals(last, VOID);
-        updateLineItemList();
+        register.itemVoided();
     }
     private void clickVoidBasketBtn(ActionEvent e){
         if(basketEmptyCheck()){return;}
-        listModel.removeAllElements();
-        lineItemList = null;
-        register.basketVoided();
+        register.endBasket(RegisterEventEnums.VOIDBASKET);
         lineItemList = new ArrayList<>();
-        updateTotals(null, COMPLETE);
+        this.updateLineItemList();
+        newUpdateTotals(BigDecimal.ZERO, BigDecimal.ZERO);
     }
 
     private void addItemsToGrid(JPanel itemGrid){
-        List<PriceBook> items = register.sendPriceBook();
-        for(int i =0 ; i < items.size(); i++){
-            JButton itemBtn = new JButton("<html><span style='font-size:10px'>"+items.get(i).getItemName()+" </span></html>");
-            itemBtn.putClientProperty("item", items.get(i));
-            itemBtn.setSize(100,25);
+        List<Item> items = register.sendPriceBook();
+        for (Item value : items) {
+            JButton itemBtn = new JButton("<html><span style='font-size:10px'>" + value.getName() + " </span></html>");
+            itemBtn.putClientProperty("item", value);
+            itemBtn.setSize(100, 25);
             itemBtn.addActionListener(e -> {
-                PriceBook item = (PriceBook) itemBtn.getClientProperty("item");
+                Item item = (Item) itemBtn.getClientProperty("item");
                 LineItem lineItem = LineItem.builder()
-                        .name(item.getItemName())
-                        .value(item.getPrice())
+                        .item(item)
+                        .price(item.getPrice())
                         .quantity(1)
                         .voided(false)
                         .build();
 
-                LineItem itemForRegister = LineItem.builder()
-                        .name(item.getItemName())
-                        .value(item.getPrice())
-                        .quantity(1)
-                        .voided(false)
-                        .build();
-
-                lineItemList.add(lineItem);
-                updateLineItemList();
-                updateTotals(lineItem, ADD);
-                register.itemAdded(itemForRegister);
+                lineItemList = new ArrayList<>();
+                register.itemAdded(lineItem);
             });
             itemGrid.add(itemBtn);
         }
@@ -205,27 +178,13 @@ public class PosFrame extends JFrame implements ScannedEventListener {
     private void updateLineItemList() {
         listModel.removeAllElements();
         for (LineItem item : lineItemList) {
-            listModel.addElement(item.getName() + "\t\t\t 1 \t\t\t\t"+ item.getValue().toString());
+            listModel.addElement(item.getItem().getName() + "\t\t\t 1 \t\t\t\t"+ item.getItem().getPrice().toString());
         }
     }
 
-    private void updateTotals(LineItem lineItem, String operation){
-        switch (operation) {
-            case ADD -> {
-                subtotalVal = subtotalVal.add(lineItem.getValue());
-                totalVal = subtotalVal.add(subtotalVal.multiply(BigDecimal.valueOf(.07)));
-            }
-            case VOID -> {
-                subtotalVal = subtotalVal.subtract(lineItem.getValue());
-                totalVal = subtotalVal.add(subtotalVal.multiply(BigDecimal.valueOf(.07)));
-            }
-            case COMPLETE -> {
-                subtotalVal = BigDecimal.valueOf(0);
-                totalVal = BigDecimal.valueOf(0);
-            }
-        }
-        totalValue.setText("<html><span style='font-size:16px'>$"+ decimalFormat.format(totalVal) +"</span></html>");
-        subTotalValue.setText("<html><span style='font-size:16px'>$"+ decimalFormat.format(subtotalVal)+"</span></html>");
+    private void newUpdateTotals(BigDecimal total, BigDecimal subtotal){
+        totalValue.setText("<html><span style='font-size:16px'>$"+ decimalFormat.format(total) +"</span></html>");
+        subTotalValue.setText("<html><span style='font-size:16px'>$"+ decimalFormat.format(subtotal)+"</span></html>");
     }
 
     private boolean basketEmptyCheck(){

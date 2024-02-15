@@ -29,14 +29,17 @@ public class ClientHandler implements Runnable{
     @Override
     public void run() {
         while(!stopped){
-//            try{
-//                char c = (char)reader.read();
-//                System.out.print(c);
-//            }
-//            catch(Exception e){
-//                System.out.println(e);
-//                break;
-//            }
+            try{
+                char c = (char)reader.read();
+//                if(c == '\uFFFF'){
+//                    break;
+//                }
+                System.out.print(c);
+            }
+            catch(Exception e){
+                System.out.println(e);
+                break;
+            }
         }
         server.disconnect(this);
     }

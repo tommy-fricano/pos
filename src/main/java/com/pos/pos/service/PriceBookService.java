@@ -1,10 +1,8 @@
 package com.pos.pos.service;
 
-import com.pos.pos.models.PriceBook;
+import com.pos.pos.models.Item;
 import com.pos.pos.repositories.PriceBookRepo;
-import lombok.RequiredArgsConstructor;
 import org.springframework.beans.factory.annotation.Autowired;
-import org.springframework.boot.autoconfigure.AutoConfiguration;
 import org.springframework.stereotype.Service;
 
 import java.util.List;
@@ -19,11 +17,11 @@ public class PriceBookService {
         this.priceBookRepo = priceBookRepo;
     }
 
-    public List<PriceBook> getPriceBook(){
+    public List<Item> getPriceBook(){
         return priceBookRepo.findRandomItems();
     }
 
-    public PriceBook getPriceBookItem(long code){
-        return priceBookRepo.findPriceBookByCode(code);
+    public Item getItem(long code){
+        return priceBookRepo.findItemByCode(code);
     }
 }

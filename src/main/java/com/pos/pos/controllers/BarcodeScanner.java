@@ -1,6 +1,6 @@
 package com.pos.pos.controllers;
 
-import com.pos.pos.listener.ScannedEventListener;
+import com.pos.pos.listeners.ScannedEventListener;
 import org.springframework.stereotype.Component;
 
 import java.awt.*;
@@ -11,9 +11,9 @@ import java.util.List;
 @Component
 public class BarcodeScanner implements KeyEventDispatcher {
 
-    private StringBuilder scannedData = new StringBuilder();
+    private final StringBuilder scannedData = new StringBuilder();
 
-    private List<ScannedEventListener> listeners;
+    private final List<ScannedEventListener> listeners;
 
     public BarcodeScanner() {
         this.listeners = new ArrayList<>();
@@ -31,7 +31,7 @@ public class BarcodeScanner implements KeyEventDispatcher {
             // Check for the Enter key to indicate the end of a scan
             if (typedChar == '\n') {
                 handleScannedData(scannedData.toString());
-                scannedData.setLength(0); // Clear the scanned data buffer
+                scannedData.setLength(0);
             } else {
                 scannedData.append(typedChar);
             }

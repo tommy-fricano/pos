@@ -1,4 +1,4 @@
-package com.pos.pos.listener;
+package com.pos.pos.listeners;
 
 public interface ScannedEventListener {
     void onScanned(String scannedData);

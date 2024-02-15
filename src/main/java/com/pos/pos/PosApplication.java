@@ -20,8 +20,9 @@ public class PosApplication extends JFrame{
 		try{
 			Server server = new Server();
 			server.start(4040);
-		}catch (Exception e){
-			System.out.println(e.getStackTrace());
+		}
+		catch (Exception e){
+			e.getStackTrace();
 		}
 	}
 
