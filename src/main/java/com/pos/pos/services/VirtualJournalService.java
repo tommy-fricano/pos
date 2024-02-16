@@ -1,4 +1,4 @@
-package com.pos.pos.service;
+package com.pos.pos.services;
 
 import com.pos.pos.controllers.Register;
 import com.pos.pos.listeners.RegisterEvent;
@@ -44,7 +44,7 @@ public class VirtualJournalService implements RegisterEventListener {
 
     public void basketCompleteLog(RegisterEvent event){
         StringBuilder log = new StringBuilder();
-        log.append(VIRTUAL_JOURNAL_LOG).append(": ").append(event.buildEventString());
+        log.append(VIRTUAL_JOURNAL_LOG).append(event.buildEventString());
         server.broadcast(String.valueOf(log));
         System.out.println(log);
     }

@@ -32,7 +32,6 @@ public class ClientHandler implements Runnable{
     public void run() {
         while(!stopped){
             try{
-
                 char c = (char)reader.read();
                 if(c == '\uFFFF'){
                     break;

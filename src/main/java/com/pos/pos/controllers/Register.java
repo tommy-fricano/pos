@@ -4,12 +4,14 @@ import com.pos.pos.listeners.*;
 import com.pos.pos.models.Basket;
 import com.pos.pos.models.Item;
 import com.pos.pos.models.LineItem;
-import com.pos.pos.service.PriceBookService;
+import com.pos.pos.services.HttpClientService;
+import com.pos.pos.services.PriceBookService;
 import jakarta.annotation.PostConstruct;
 import lombok.Getter;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.stereotype.Component;
 
+import java.io.IOException;
 import java.time.ZoneId;
 import java.time.ZonedDateTime;
 import java.util.ArrayList;
@@ -22,19 +24,21 @@ public class Register implements ScannedEventListener, RegisterEventListener{
 
     private final PriceBookService priceBookService;
 
+    private final HttpClientService httpClientService;
+
     @Getter
     private final BarcodeScanner barcodeScanner;
-
 
 
     @Getter
     private Basket basket;
 
-    boolean isBasket;
+    private boolean isBasket;
 
     @Autowired
-    public Register(PriceBookService priceBookService, BarcodeScanner barcodeScanner) {
+    public Register(PriceBookService priceBookService, HttpClientService httpClientService, BarcodeScanner barcodeScanner) {
         this.priceBookService = priceBookService;
+        this.httpClientService = httpClientService;
         this.barcodeScanner = barcodeScanner;
         this.listeners = new ArrayList<>();
     }
@@ -77,7 +81,7 @@ public class Register implements ScannedEventListener, RegisterEventListener{
     }
 
     public void itemAdded(LineItem lineItem){
-        if(this.basket == null){
+        if(!this.isBasket){
             this.startBasket();
         }
         this.basket.appendLineItem(lineItem);
@@ -101,7 +105,10 @@ public class Register implements ScannedEventListener, RegisterEventListener{
     }
 
 
-    public void endBasket(RegisterEventEnums eventEnums){
+    public void endBasket(RegisterEventEnums eventEnums) {
+        if(eventEnums == RegisterEventEnums.CASHCHECKOUT || eventEnums == RegisterEventEnums.CREDITCHECKOUT){
+            basket = this.httpClientService.sendRequestToDiscountService(this.basket);
+        }
         this.updateListeners(
                 RegisterEvent.builder()
                 .action(eventEnums)
@@ -115,6 +122,7 @@ public class Register implements ScannedEventListener, RegisterEventListener{
 //                        .build()
 //        );
         this.basket = null;
+        this.isBasket = false;
     }
 
     public List<Item> sendPriceBook(){

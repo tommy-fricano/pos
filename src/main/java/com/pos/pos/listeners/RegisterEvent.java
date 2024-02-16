@@ -1,7 +1,8 @@
 package com.pos.pos.listeners;
 
-import com.google.gson.Gson;
-import com.google.gson.GsonBuilder;
+
+import com.fasterxml.jackson.core.JsonProcessingException;
+import com.fasterxml.jackson.databind.ObjectMapper;
 import com.pos.pos.models.Basket;
 import com.pos.pos.models.LineItem;
 import lombok.*;
@@ -12,7 +13,6 @@ import lombok.*;
 @NoArgsConstructor
 @Builder
 public class RegisterEvent {
-
 
     private RegisterEventEnums action;
     private Basket basket;
@@ -32,8 +32,11 @@ public class RegisterEvent {
     }
 
     public String toJson(){
-        Gson gson = new GsonBuilder().setPrettyPrinting()
-                .create();
-        return gson.toJson(basket);
+        ObjectMapper objectMapper = new ObjectMapper();
+        try {
+            return objectMapper.writeValueAsString(basket);
+        } catch (JsonProcessingException e) {
+            throw new RuntimeException("Failed to convert BasketDTO to JSON", e);
+        }
     }
 }

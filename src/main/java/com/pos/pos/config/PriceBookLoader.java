@@ -1,11 +1,8 @@
 package com.pos.pos.config;
 
-import com.pos.pos.service.PriceBookService;
 import com.pos.pos.repositories.PriceBookRepo;
 import com.pos.pos.util.FileReader;
-import jakarta.annotation.PostConstruct;
 import jakarta.transaction.Transactional;
-import lombok.NoArgsConstructor;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.context.annotation.Configuration;
 import org.springframework.util.ResourceUtils;

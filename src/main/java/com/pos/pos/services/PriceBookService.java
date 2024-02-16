@@ -1,4 +1,4 @@
-package com.pos.pos.service;
+package com.pos.pos.services;
 
 import com.pos.pos.models.Item;
 import com.pos.pos.repositories.PriceBookRepo;

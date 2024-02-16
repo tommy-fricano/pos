@@ -1,16 +1,15 @@
 package com.pos.pos.models;
 
-import com.google.gson.annotations.SerializedName;
-import lombok.Getter;
-import lombok.Setter;
+import lombok.*;
 
 import java.math.BigDecimal;
-import java.time.ZonedDateTime;
+import java.math.RoundingMode;
 import java.util.ArrayList;
 import java.util.List;
 
 @Setter
 @Getter
+@RequiredArgsConstructor
 public class Basket {
 
     private static final BigDecimal TAX = BigDecimal.valueOf(.07);
@@ -19,9 +18,9 @@ public class Basket {
 
     private boolean voided = false;
 
-    private BigDecimal subtotal = BigDecimal.valueOf(0);
+    private BigDecimal subtotal = BigDecimal.ZERO;
 
-    private BigDecimal total= BigDecimal.valueOf(0);
+    private BigDecimal total= BigDecimal.ZERO;
 
     private String registerId;
 
@@ -29,12 +28,16 @@ public class Basket {
 
     private String createdTimestamp;
 
+    private BigDecimal discount = BigDecimal.ZERO;
+
+    // try with resources
+
 
     public void appendLineItem(LineItem lineItem){
         lineItems.add(lineItem);
 
-        subtotal = subtotal.add(lineItem.getPrice());
-        total = subtotal.add(subtotal.multiply(TAX));
+        subtotal = (subtotal.add(lineItem.getPrice())).setScale(2, RoundingMode.HALF_UP);
+        total = (subtotal.add(subtotal.multiply(TAX))).setScale(2, RoundingMode.HALF_UP);
     }
 
     public void voidLineItem(){
@@ -45,8 +48,8 @@ public class Basket {
         LineItem last = nonVoidedLineItems.get(nonVoidedLineItems.size()-1);
         last.setVoided(true);
 
-        subtotal = subtotal.subtract(last.getPrice());
-        total = subtotal.add(subtotal.multiply(TAX));
+        subtotal = (subtotal.subtract(last.getPrice())).setScale(2, RoundingMode.HALF_UP);
+        total = (subtotal.add(subtotal.multiply(TAX))).setScale(2, RoundingMode.HALF_UP);
     }
 
     public List<LineItem> getNonVoidedLineItems(){
