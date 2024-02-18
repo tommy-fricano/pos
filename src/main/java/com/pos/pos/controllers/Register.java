@@ -105,22 +105,33 @@ public class Register implements ScannedEventListener, RegisterEventListener{
     }
 
 
-    public void endBasket(RegisterEventEnums eventEnums) {
-        if(eventEnums == RegisterEventEnums.CASHCHECKOUT || eventEnums == RegisterEventEnums.CREDITCHECKOUT){
-            basket = this.httpClientService.sendRequestToDiscountService(this.basket);
-        }
+    public void checkout(RegisterEventEnums eventEnums) {
+        basket = this.httpClientService.sendRequestToDiscountService(this.basket);
+        basket.applyDiscount();
+
         this.updateListeners(
                 RegisterEvent.builder()
                 .action(eventEnums)
                 .basket(this.basket)
                 .build()
         );
-//        this.updateListeners(
-//                RegisterEvent.builder()
-//                .action(RegisterEventEnums.ENDBASKET)
-//                        .basket(this.basket)
-//                        .build()
-//        );
+    }
+
+    public void voidBasket(){
+        this.updateListeners(
+                RegisterEvent.builder()
+                        .action(RegisterEventEnums.VOIDBASKET)
+                        .basket(this.basket)
+                        .build()
+        );
+        this.endBasket();
+    }
+
+    public void endBasket(){
+        this.updateListeners(RegisterEvent.builder()
+                .action(RegisterEventEnums.ENDBASKET)
+                        .build()
+        );
         this.basket = null;
         this.isBasket = false;
     }

@@ -1,5 +1,7 @@
 package com.pos.pos.models;
 
+import com.fasterxml.jackson.annotation.JsonIgnore;
+import com.fasterxml.jackson.annotation.JsonProperty;
 import lombok.*;
 
 import java.math.BigDecimal;
@@ -14,21 +16,32 @@ public class Basket {
 
     private static final BigDecimal TAX = BigDecimal.valueOf(.07);
 
+    @JsonProperty("lineItems")
     private List<LineItem> lineItems;
 
+    @JsonProperty("voided")
     private boolean voided = false;
 
+    @JsonProperty("subtotal")
     private BigDecimal subtotal = BigDecimal.ZERO;
 
+    @JsonProperty("total")
     private BigDecimal total= BigDecimal.ZERO;
 
+    @JsonProperty("registerId")
     private String registerId;
 
+    @JsonProperty("cashierId")
     private String cashierId;
 
+    @JsonProperty("createdTimestamp")
     private String createdTimestamp;
 
+    @JsonProperty("discount")
     private BigDecimal discount = BigDecimal.ZERO;
+
+    @JsonIgnore
+    List<LineItem> nonVoidedLineItems;
 
     // try with resources
 
@@ -44,7 +57,7 @@ public class Basket {
         if(lineItems.isEmpty()){
             return;
         }
-        List<LineItem> nonVoidedLineItems = this.getNonVoidedLineItems();
+        nonVoidedLineItems = this.getNonVoidedLineItems();
         LineItem last = nonVoidedLineItems.get(nonVoidedLineItems.size()-1);
         last.setVoided(true);
 
@@ -59,6 +72,10 @@ public class Basket {
                 result.add(lineItem);
             }
         }
-        return result;
+        return result.isEmpty() ? new ArrayList<>() : result;
+    }
+
+    public void applyDiscount() {
+        total = total.subtract(discount);
     }
 }

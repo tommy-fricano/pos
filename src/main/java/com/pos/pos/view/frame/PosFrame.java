@@ -52,9 +52,17 @@ public class PosFrame extends JFrame implements RegisterEventListener {
 
     @Override
     public void updateListeners(RegisterEvent event) {
-        lineItemList = event.getBasket().getNonVoidedLineItems() == null ? new ArrayList<>() : new ArrayList<>(event.getBasket().getNonVoidedLineItems());
+        BigDecimal total = BigDecimal.ZERO;
+        BigDecimal subtotal = BigDecimal.ZERO;
+        if (event.getBasket() == null || event.getBasket().getNonVoidedLineItems() == null ) {
+            lineItemList = new ArrayList<>();
+        } else {
+            lineItemList = new ArrayList<>(event.getBasket().getNonVoidedLineItems());
+            total = event.getBasket().getTotal();
+            subtotal = event.getBasket().getSubtotal();
+        }
         updateLineItemList();
-        newUpdateTotals(event.getBasket().getTotal(), event.getBasket().getSubtotal());
+        newUpdateTotals(total, subtotal);
     }
 
 
@@ -127,19 +135,19 @@ public class PosFrame extends JFrame implements RegisterEventListener {
 
     public void clickCreditBtn(ActionEvent e){
         if(basketEmptyCheck()){return;}
-        register.endBasket(RegisterEventEnums.CREDITCHECKOUT);
+        register.checkout(RegisterEventEnums.CREDITCHECKOUT);
         lineItemList = new ArrayList<>();
         this.updateLineItemList();
+        this.displayDiscountAndTotal();
         newUpdateTotals(BigDecimal.ZERO, BigDecimal.ZERO);
-        JOptionPane.showMessageDialog(null, "Order Tendered with credit. Starting new basket.");
     }
     private void clickCashBtn(ActionEvent e){
         if(basketEmptyCheck()){return;}
-        register.endBasket(RegisterEventEnums.CASHCHECKOUT);
+        register.checkout(RegisterEventEnums.CASHCHECKOUT);
         lineItemList = new ArrayList<>();
         this.updateLineItemList();
+        this.displayDiscountAndTotal();
         newUpdateTotals(BigDecimal.ZERO, BigDecimal.ZERO);
-        JOptionPane.showMessageDialog(null, "Order Tendered with cash. Starting new basket.");
     }
     private void clickVoidItemBtn(ActionEvent e){
         if(basketEmptyCheck()){return;}
@@ -147,7 +155,7 @@ public class PosFrame extends JFrame implements RegisterEventListener {
     }
     private void clickVoidBasketBtn(ActionEvent e){
         if(basketEmptyCheck()){return;}
-        register.endBasket(RegisterEventEnums.VOIDBASKET);
+        register.voidBasket();
         lineItemList = new ArrayList<>();
         this.updateLineItemList();
         newUpdateTotals(BigDecimal.ZERO, BigDecimal.ZERO);
@@ -174,6 +182,34 @@ public class PosFrame extends JFrame implements RegisterEventListener {
             itemGrid.add(itemBtn);
         }
     }
+
+        private void displayDiscountAndTotal() {
+            JPanel panel = new JPanel();
+            panel.add(new JLabel("Customer received a discount of $" + register.getBasket().getDiscount()));
+            panel.add(new JLabel("Order total tendered with cash: $" + register.getBasket().getTotal()));
+
+            JButton okButton = new JButton("OK");
+            panel.add(okButton);
+
+            JDialog dialog = new JDialog((JFrame) null, "Discount Information", true);
+            dialog.setDefaultCloseOperation(JDialog.DISPOSE_ON_CLOSE);
+            dialog.getContentPane().add(panel);
+            dialog.setSize(300, 200);
+            dialog.setLocationRelativeTo(null);
+
+            okButton.addActionListener(e -> {
+                dialog.dispose(); // Close the dialog when OK button is clicked
+            });
+
+            dialog.addWindowListener(new WindowAdapter() {
+                @Override
+                public void windowClosed(WindowEvent e) {
+                    register.endBasket();
+                }
+            });
+
+            dialog.setVisible(true);
+        }
 
     private void updateLineItemList() {
         listModel.removeAllElements();
