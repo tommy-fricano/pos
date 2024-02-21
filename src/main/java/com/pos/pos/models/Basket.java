@@ -43,8 +43,6 @@ public class Basket {
     @JsonIgnore
     List<LineItem> nonVoidedLineItems;
 
-    // try with resources
-
 
     public void appendLineItem(LineItem lineItem){
         lineItems.add(lineItem);
@@ -76,6 +74,11 @@ public class Basket {
     }
 
     public void applyDiscount() {
-        total = total.subtract(discount);
+        if(discount.compareTo(total) == 1){
+            total = BigDecimal.ZERO;
+        }
+        else{
+            total = total.subtract(discount);
+        }
     }
 }
